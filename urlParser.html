@@ -1,58 +1,126 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
         <title>URL Parser</title>
         <style>
-            .zui-table {
-                border: solid 1px #DDEEEE;
-                border-collapse: collapse;
-                border-spacing: 0;
-                font: normal 13px Arial, sans-serif;
+            #URLInput {
+                width: 100%;
             }
-            .zui-table th {
-                background-color: #DDEFEF;
-                border: solid 1px #DDEEEE;
-                color: #336B6B;
-                padding: 10px;
-                text-align: left;
-                text-shadow: 1px 1px 1px #fff;
+
+            #error {
+                color: #f00;
+                margin: 0% 30%;
             }
-            .zui-table td {
-                border: solid 1px #DDEEEE;
-                color: #333;
-                padding: 10px;
-                text-shadow: 1px 1px 1px #fff;
+
+            .show {
+                display: inline-block;
             }
-            .italic {
-                font-style: italic;
+
+            .hide {
+                display: none;
             }
         </style>
         <script>
             window.onload = function() {
-                const href = window.location.href;
-                document.getElementById("URL").innerHTML = href;
+                prefillURLInput("URLInput", true, "domainTableBody", "paraTableBody");
+            }
+
+            function parseURL(fieldId, domainTableId, paraTableId) {
+                const value = document.getElementById(fieldId).value;
+                const domainTable = document.getElementById(domainTableId);
+                const paraTable = document.getElementById(paraTableId);
+                
+                // clear table
+                domainTable.innerHTML = "";
+                paraTable.innerHTML = "";
 
 
-                const params = new URLSearchParams(window.location.search);
-                const table = document.getElementById("paramsTable");
+                toggleErrorText(false);
+                let URLobj;
+                try {
+                    URLobj = new URL(value);
+                } catch (_) {
+                    toggleErrorText(true);
+                    return false;  
+                }
 
-                params.forEach((value, para) => {
-                    const row = table.insertRow(-1);
+                console.log(URLobj);
 
-                    row.insertCell(0).innerHTML = para;
-                    row.insertCell(1).innerHTML = value;
+                // Fill Domain-table rows
+                insertRow(domainTable, "Protocol", URLobj.protocol);
+                insertRow(domainTable, "Hostname", URLobj.hostname);
+                insertRow(domainTable, "Port", URLobj.port);
+                insertRow(domainTable, "Pathname", URLobj.pathname);
+                insertRow(domainTable, "Hash", URLobj.hash);
+
+                // Fill Parameter-table rows
+                URLobj.searchParams.forEach((value, key) => {
+                    insertRow(paraTable, key, value);
                 });
+            }
+
+            function prefillURLInput(fieldId, shouldParse = false, domainTableId = null, paraTableId = null) {
+                if (window.location.search == "")
+                    return;
+                
+                document.getElementById(fieldId).value = window.location.href;
+
+                if (shouldParse)
+                    parseURL(fieldId, domainTableId, paraTableId);
+            }
+
+            function insertRow(table, value1, value2) {
+                const row = table.insertRow(-1);
+
+                row.insertCell(0).innerHTML = value1;
+                row.insertCell(1).innerHTML = value2;
+            }
+
+            function toggleErrorText(show = true) {
+                const text = document.getElementById("error");
+                if (show == true)
+                    text.className = "show";
+                else
+                    text.className = "hide";
             }
         </script>
     </head>
     <body>
-        <h4>URL parser</h4>
-        <p>URL: <span id="URL" class="italic"></span></p>
-        <table id="paramsTable" class="zui-table">
-            <tr>
-                <th>Parameter</th>
-                <th>Value</th>
-            </tr>
-        </table>
+        <header>
+        <h4>URL Parser</h4>
+        </header>
+        <main>
+            <div>
+                <input type="text" id="URLInput" placeholder="URL to parse" />
+                <br />
+                <button onclick="parseURL('URLInput', 'domainTableBody', 'paraTableBody')">Parse</button>
+                <span id="error" class="hide">URL is not valid!</span>
+            </div>
+            <div>
+                <p>Domain:</p>
+                <table id="domainTable">
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="domainTableBody"></tbody>
+                </table>
+            </div>
+            <div>
+                <p>Parameters:</p>
+                <table id="paraTable">
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paraTableBody"></tbody>
+                </table>
+            </div>
+        </main>
     </body>
 </html>
