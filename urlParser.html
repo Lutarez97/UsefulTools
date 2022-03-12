@@ -8,25 +8,102 @@
                 width: 100%;
             }
 
-            #error {
-                color: #f00;
-                margin: 0% 30%;
+            .errorField {
+                border-color: #c92432;
+                color: #c92432;
+                outline: none;
             }
 
-            .show {
-                display: inline-block;
+            .tooltip {
+                position: relative;
             }
 
-            .hide {
-                display: none;
+            .tooltip::after {
+                /*background-color: var(--accent-bg);*/
+                background-color: #c92432;
+                /*color: #c92432;*/
+                /*font-family: "Roboto", sans-serif;*/
+                /*font-weight: normal;*/
+                z-index: 9;
+                font-size: 14px;
+                padding: 5px 12px;
+                height: fit-content;
+                width: fit-content;
+                border-radius: 6px;
+                position: absolute;
+                text-align: center;
+                bottom: 0px;
+                left: 50%;
+                content: attr(data-customTooltip);
+                transform: translate(-50%, 110%) scale(1);
+                transform-origin: top;
+                transition: 0.14s;
+                /*box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);*/
             }
+
+            .tooltip:hover:after {
+                display: block;
+                transform: translate(-50%, 110%) scale(0);
+            }
+
         </style>
         <script>
             window.onload = function() {
                 prefillURLInput("URLInput", true, "domainTableBody", "paraTableBody");
+
+                /*document.getElementById("URLInput").addEventListener("keyup", ({ keyCode }) => {
+                    if (keyCode == 13)
+                        parseURL("URLInput", "domainTableBody", "paraTableBody");
+                });*/
+
+                document.getElementById("URLInput").addEventListener("input", () => {
+                   clear("URLInput"); 
+                });
+            }
+
+            function validate(fieldId) {
+                const field = document.getElementById(fieldId);
+                const parent = field.parentElement;
+                const value = field.value;
+
+                if (value == "") {
+                    addTooltip(fieldId, "Fill in an URL");
+                    return false;
+                }
+
+                let URLobj;
+                try {
+                    URLobj = new URL(value);
+                } catch (_) {
+                    addTooltip(fieldId, "URL is invalid!");
+                    return false;
+                }
+
+                return true;
+            }
+
+            function addTooltip(fieldId, message="") {
+                const field = document.getElementById(fieldId);
+                const parent = field.parentElement;
+
+                field.classList.add("errorField");
+                parent.classList.add("tooltip");
+                parent.setAttribute("data-customTooltip", message);
+            }
+
+            function clear(fieldId) {
+                const field = document.getElementById(fieldId);
+                const parent = field.parentElement;
+
+                field.classList.remove("errorField");
+                parent.classList.remove("tooltip");
+                parent.removeAttribute("data-customTooltip");
             }
 
             function parseURL(fieldId, domainTableId, paraTableId) {
+                const res = validate(fieldId);
+                if (!res) return;
+
                 const value = document.getElementById(fieldId).value;
                 const domainTable = document.getElementById(domainTableId);
                 const paraTable = document.getElementById(paraTableId);
@@ -36,16 +113,7 @@
                 paraTable.innerHTML = "";
 
 
-                toggleErrorText(false);
-                let URLobj;
-                try {
-                    URLobj = new URL(value);
-                } catch (_) {
-                    toggleErrorText(true);
-                    return false;  
-                }
-
-                console.log(URLobj);
+                const URLobj = new URL(value);
 
                 // Fill Domain-table rows
                 insertRow(domainTable, "Protocol", URLobj.protocol);
@@ -76,14 +144,6 @@
                 row.insertCell(0).innerHTML = value1;
                 row.insertCell(1).innerHTML = value2;
             }
-
-            function toggleErrorText(show = true) {
-                const text = document.getElementById("error");
-                if (show == true)
-                    text.className = "show";
-                else
-                    text.className = "hide";
-            }
         </script>
     </head>
     <body>
@@ -92,11 +152,13 @@
         </header>
         <main>
             <div>
-                <input type="text" id="URLInput" placeholder="URL to parse" />
+                <label>URL to parse</label><br />
+                <span>
+                    <input type="text" id="URLInput" />
+                </span>
                 <br />
-                <button onclick="parseURL('URLInput', 'domainTableBody', 'paraTableBody')">Parse</button>
-                <span id="error" class="hide">URL is not valid!</span>
-            </div>
+                <button onclick="parseURL('URLInput', 'domainTableBody', 'paraTableBody')" type="button">Parse</button>
+           </div>
             <div>
                 <p>Domain:</p>
                 <table id="domainTable">
