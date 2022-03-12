@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+    <head>
+		<meta name="color-scheme" content="dark light">
+        <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+        <title>SVNR Calculator</title>
+        <style>
+            .invisibleTable {
+                margin: 0px;
+            }
+            .invisibleTable td {
+                border: 0px;
+                background-color: var(--bg);
+                padding: 0px;
+            }
+            .invisibleTable input {
+                width: 90%;
+            }
+
+            .invisibleTable button {
+                margin-top: 0px;
+            }
+
+            .errorField {
+                border-color: #c92432;
+                color: #c92432;
+                outline: none;
+            }
+
+            .tooltip {
+                position: relative;
+            }
+
+            .tooltip::after {
+                /*background-color: var(--accent-bg);*/
+                background-color: #c92432;
+                /*color: #c92432;*/
+                /*font-family: "Roboto", sans-serif;*/
+                /*font-weight: normal;*/
+                z-index: 9;
+                font-size: 14px;
+                padding: 5px 12px;
+                height: fit-content;
+                width: fit-content;
+                border-radius: 6px;
+                position: absolute;
+                text-align: center;
+                bottom: 0px;
+                left: 50%;
+                content: attr(data-customTooltip);
+                transform: translate(-50%, 110%) scale(1);
+                transform-origin: top;
+                transition: 0.14s;
+                /*box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);*/
+            }
+
+            .tooltip:hover:after {
+                display: block;
+                transform: translate(-50%, 110%) scale(0);
+            }
+        </style>
+        <script>
+            window.onload = () => {
+                document.getElementById("num").addEventListener("input", () => {
+                   clear("num"); 
+                });
+            }
+
+            function SVNRcalc() {
+                let val = validateNum("num");
+                if (!val) return;
+
+                let num = document.getElementById("num").value;
+                let date = document.getElementById("date").value;
+
+                let sum = 0;
+
+                const arr1 = Array.from(num.toString()).map(Number);
+                arr1.push(null);
+
+                date = date.substring(2).replaceAll("-", "");
+                const arr2= Array.from(date.toString()).map(Number);
+
+                const result = arr1.concat(arr2);
+
+                // NNN-JJMMDD
+                for (let i = 0; i < result.length; i++) {
+                    const ele = result[i];
+                    
+                    switch (i) {
+                        case 0:
+                            sum += ele * 3;
+                            break;
+                        case 1:
+                            sum += ele * 7;
+                            break;
+                        case 2:
+                            sum += ele * 9;
+                            break;
+                        case 4:
+                            sum += ele * 1;
+                            break;
+                        case 5:
+                            sum += ele * 6;
+                            break;
+                        case 6:
+                            sum += ele * 4;
+                            break;
+                        case 7:
+                            sum += ele * 2;
+                            break;
+                        case 8:
+                            sum += ele * 5;
+                            break;
+                        case 9:
+                            sum += ele * 8;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                sum = sum % 11;
+                // rest = 10, dann error
+                // http://www.pruefziffernberechnung.de/V/VSNR-AT.shtml
+
+                document.getElementById("result").innerHTML = result.join("");
+            }
+
+            function validateNum(fieldId) {
+                const field = document.getElementById(fieldId);
+                const parent = field.parentElement;
+                const value = field.value;
+                let res = true;
+                let message = "";
+
+                if (value == "") {
+                    message = "Please fill the field";
+                    res = false;
+                }
+
+                if (value > 999 || value < 0) {
+                    message = "Provide a number between 0 and 999"
+                    res = false;
+                }
+
+                if (!res) {
+                    field.classList.add("errorField");
+                    parent.classList.add("tooltip");
+                    parent.setAttribute("data-customTooltip", message);
+                    return false;
+                }
+                return true;
+            }
+
+            function clear(fieldId) {
+                const field = document.getElementById(fieldId);
+                const parent = field.parentElement;
+
+                field.classList.remove("errorField");
+                parent.classList.remove("tooltip");
+                parent.removeAttribute("data-customTooltip");
+            }
+        </script>
+    </head>
+    <body>
+        <header>
+            <h4>SVNR Calculator</h4>
+        </header>
+        <main>
+            <div>
+                <table class="invisibleTable">
+                    <tbody>
+                        <tr>
+                            <td>Number</td>
+                            <td>Birth Date</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span>
+                                    <input type="number" min="0" max="999" id="num" placeholder="NNN" />
+                                </span>
+                            </td>
+                            <td>
+                                <span>
+                                    <input type="date" id="date" />
+                                </span>
+                            </td>
+                            <td>
+                                <button onclick="SVNRcalc()">Calculate</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!--<div>
+                <label>Number</label><br>
+                <input type="number" min="0" max="999" id="num" />
+                <br>
+                <label>Birth Date</label><br>
+                <input type="date" id="date" />
+                <br>
+                <button onclick="SVNRcalc()">Calculate</button>
+            </div>-->
+
+            <p><span id="result"></span></p>
+        </main>
+    </body>
+</html>
