@@ -1,0 +1,301 @@
+<!-- https://www.javascripttutorial.net/array/javascript-sort-an-array-of-objects/
+https://sebhastian.com/javascript-csv-to-array/#:~:text=To%20convert%20or%20parse%20CSV,only%20works%20in%20the%20browser.
+https://stackoverflow.com/questions/18848860/javascript-array-to-csv
+https://hasnode.byrayray.dev/convert-a-csv-to-a-javascript-array-of-objects-the-practical-guide
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+        <title>URL Parser</title>
+        <style>
+            .errorField {
+                border-color: #c92432;
+                color: #c92432;
+                outline: none;
+            }
+
+            .tooltip {
+                position: relative;
+            }
+
+            .tooltip::after {
+                background-color: #c92432;
+                z-index: 9;
+                font-size: 14px;
+                padding: 5px 12px;
+                height: fit-content;
+                width: fit-content;
+                border-radius: 6px;
+                position: absolute;
+                text-align: center;
+                bottom: 0px;
+                left: 50%;
+                content: attr(data-customTooltip);
+                transform: translate(-50%, 110%) scale(1);
+                transform-origin: top;
+                transition: 0.14s;
+            }
+
+            .tooltip:hover:after {
+                display: block;
+                transform: translate(-50%, 110%) scale(0);
+            }
+
+        </style>
+        <script>
+            // Global Variables
+            var headerRow;
+            var contentRow;
+            var lineBreak;
+            var sortColumn;
+            var listDOM;
+
+            window.onload = function() {
+                const fileInput = document.getElementById("csvFile");
+                listDOM = document.getElementById("headers");
+
+
+                fileInput.onchange = () => {
+                    listDOM.innerHTML = ""; // Clear list
+                    clear("csvFile"); // Clear error tooltip
+                    if (fileInput.files.length == 0) return; // break when no file is selected
+
+                    const selectedFile = fileInput.files[0]; // get file
+
+                    // check if file is a csv file, when not than add a tooltip and break
+                    if (selectedFile.type != "text/csv") {
+                        addTooltip("csvFile", "Upload a CSV file");
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const fileContent = e.target.result;
+                        lineBreak = getTypeOfLineBreak(fileContent); // get type of the linebreak
+
+                        [headerRow, contentRow] = csvToArray(fileContent, lineBreak);
+                        
+                        headerRow.forEach(ele => {
+                            addLinkListNode(listDOM, ele, "#", `sortAndDownload('${ele}'); return false`);
+                        });
+                    };
+                    reader.readAsText(selectedFile);
+                }
+            }
+
+            function addTooltip(fieldId, message="") {
+                const field = document.getElementById(fieldId);
+                const parent = field.parentElement;
+
+                field.classList.add("errorField");
+                parent.classList.add("tooltip");
+                parent.setAttribute("data-customTooltip", message);
+            }
+
+            function clear(fieldId) {
+                const field = document.getElementById(fieldId);
+                const parent = field.parentElement;
+
+                field.classList.remove("errorField");
+                parent.classList.remove("tooltip");
+                parent.removeAttribute("data-customTooltip");
+            }
+            
+            function csvToArray(str, lineBreak = "\r\n") {
+                // trim all whitespaces at the start and end of the string
+                str = str.trim();
+
+
+                for (let i = 0; i < str.length; i++) {
+                    const exception = "\"";
+                    const start = str.indexOf(exception, i);
+                    const end = str.indexOf("\"", start+1);
+
+                    i = end;
+                    if (start < 0 || end < 0) i = str.length;
+                    else {
+                        for (let j = start; j < i; j++) {
+                            if (str[j] == ",") {
+                                str = str.replaceAt(j, "&test;");
+                                i += 5;
+                            }
+                        }
+                    }
+                }
+
+                
+
+                // slice from start of text to the first \n index
+                // use split to create an array from string by delimiter
+                const headers = str.slice(0, str.indexOf(lineBreak)).split(",");
+                // slice from \n index + 1 to the end of the text
+                // use split to create an array of each csv value row
+                const body = str.slice(str.indexOf(lineBreak) + lineBreak.length).split(lineBreak);
+
+                // Map the row
+                // split values from each row into an array
+                // use headers.reduce to create an object
+                // object properties derived from headers:values
+                // the object passed as an element of the array
+
+                // Map the row
+                const arr = body.map(row => {
+                    // split values from each row into an array
+                    const values = row.split(",");
+                    
+                    // create object 
+                    const el = headers.reduce((object, header, index) => {
+                        object[header] = values[index];
+                        return object;
+                        }, {});
+                    return el;
+                });
+
+                // return the array
+                return [headers, arr];
+            }
+
+            String.prototype.replaceAt = function(index, replacement) {
+                return this.substring(0, index) + replacement + this.substring(index + 1);
+            }
+
+
+            function getTypeOfLineBreak(str) {
+                if (str.indexOf("\r\n") !== -1)
+                    return "\r\n";
+                if (str.indexOf("\n") !== -1)
+                    return "\n";
+                return "\r";
+            }
+
+            function addLinkListNode(list, value, href= "#" , onclick = "") {
+                let listItem = document.createElement("li");
+                let link = document.createElement("a");
+                link.setAttribute("href", href);
+                link.setAttribute("onclick", onclick);
+                link.innerText = value;
+
+                listItem.appendChild(link);
+                list.appendChild(listItem);
+            }
+
+            function sortAndDownload(str) {
+                sortColumn = str;
+                const order = document.getElementById("sortOrder");
+
+                if (sortOrder.value == "asc") contentRow.sort(sortAsc);
+                else contentRow.sort(sortDesc);
+
+                const csvString = objectToCsv(contentRow, lineBreak).replaceAll("&test;", ",");
+                download('CSV', 'test.csv', 'text/csv', csvString);
+            }
+
+
+            function sortAsc(a, b) {
+                const fa = a[sortColumn].toLowerCase();
+                const fb = b[sortColumn].toLowerCase();
+
+                if (fa < fb)
+                    return -1;
+                if (fa > fb)
+                    return 1;
+                return 0;
+            };
+
+            function sortDesc(a, b) {
+                const fa = a[sortColumn].toLowerCase();
+                const fb = b[sortColumn].toLowerCase();
+
+                if (fa > fb)
+                    return -1;
+                if (fa < fb)
+                    return 1;
+                return 0;
+            };
+
+            const objectToCsv = function (data, lineBreak) {
+                const csvRows = [];
+
+                /* Get headers as every csv data format 
+                has header (head means column name)
+                so objects key is nothing but column name 
+                for csv data using Object.key() function.
+                We fetch key of object as column name for 
+                csv */
+                const headers = Object.keys(data[0]);
+
+                /* Using push() method we push fetched 
+                data into csvRows[] array */
+                csvRows.push(headers.join(','));
+
+                
+                // Loop to get value of each objects key
+                for (const row of data) {
+                    const values = headers.map(header => {
+                        const val = row[header]
+                        return val;
+                    });
+
+                    // To add, sepearater between each value
+                    csvRows.push(values.join(','));
+                }
+
+                /* To add new line for each objects values
+                and this return statement array csvRows
+                to this function.*/
+                return csvRows.join(lineBreak);
+            };
+
+
+            function download(name, filename, type, data) {
+                // create a blob file
+                const blob = new Blob([data], {type: type});
+                // create an URL
+                const url = window.URL.createObjectURL(blob);
+
+                // download file
+                if (navigator.msSaveOrOpenBlob) {
+                    navigator.msSaveBlob(blob, name);
+                }
+                else {
+                    let a = document.createElement("a");
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+                window.URL.revokeObjectURL(url);
+            }
+        </script>
+    </head>
+    <body>
+        <header>
+        <h4>CSV Sorter</h4>
+        </header>
+        <main>
+            <div>
+                <p>
+                    <label>CSV file to sort</label>
+                    <span>
+                        <input type="file" id="csvFile" name="fileUpload" accept=".csv">
+                    </span>
+                </p>
+                <p>
+                    <label>Sort Order</label>
+                    <select name="sortOrder" id="sortOrder">
+                        <option value="asc">Ascending </option>
+                        <option value="desc">Descending </option>
+                    </select>
+                </p>
+            </div>
+            <div>
+                <p>
+                    <label>Headers:</label>
+                    <ul id="headers"></ul>
+                </p>
+            </div>
+        </main>
+    </body>
+</html>
