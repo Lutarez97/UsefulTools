@@ -1,3 +1,30 @@
+/*#region navigation*/
+nav > a > .icon {
+    vertical-align: sub;
+    padding-right: 0.0rem;
+    display: inline-block;
+    width: 1em;
+    height: 1.3em;
+    margin-right: 0.2rem;
+    stroke-width: 0;
+    stroke: currentColor;
+    fill: currentColor;
+}
+
+nav > .current {
+    color: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+body > header h2 {
+    max-width: 1200px;
+    margin: 1rem auto;
+}
+.lessPadding {
+    padding-bottom: 1em;
+}
+/*#endregion*/
+
 /*#region tooltip*/
 .errorField {
     border-color: #c92432;
@@ -32,3 +59,4 @@
     transform: translate(-50%, 110%) scale(0);
 }
 /*#endregion*/
+
