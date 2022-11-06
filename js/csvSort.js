@@ -21,21 +21,24 @@ function readFileInput() {
         addTooltip("csvFile", "Upload a CSV file");
         return;
     }
-    newFileName = updateFileName(selectedFile.name, "Sorted");
 
-    const reader = new FileReader();
+    newFileName = updateFileName(selectedFile.name, "Sorted"); // get new file name
+
+    const reader = new FileReader(); // init FileReader class
+    // assign an function, which is called, as soon the content is read
     reader.onload = e => {
-        const fileContent = e.target.result;
+        const fileContent = e.target.result; // get content of the file
         lineBreak = getTypeOfLineBreak(fileContent); // get type of the linebreak
 
-        [headerRow, contentRow] = csvToArray(fileContent, lineBreak);
+        [headerRow, contentRow] = csvToArray(fileContent, lineBreak); // break the content of the file in a header and content array
         
+        // loop all header columns to create an link-list
         headerRow.forEach(ele => {
-            const linkDom = creatLinkDOM(ele, "#", `sortAndDownload('${ele}'); return false`);
-            addListNodeDOM(listDOM, linkDom, true);
+            const linkDom = creatLinkDOM(ele, "#", `sortAndDownload('${ele}'); return false`); // create link element
+            addListNodeDOM(listDOM, linkDom, true); // add link to the list
         });
     };
-    reader.readAsText(selectedFile);
+    reader.readAsText(selectedFile); // read the content as text and trigger onload function
 }
 
 function csvToArray(str, lineBreak = "\r\n") {
@@ -84,37 +87,64 @@ function csvToArray(str, lineBreak = "\r\n") {
     return [headers, body];
 }
 
-function sortAndDownload(str) {
-    sortColumn = str;
-    const order = document.getElementById("sortOrder");
 
-    if (sortOrder.value == "asc") contentRow.sort(sortAsc);
+/**
+ * Sort the csv-file and download it
+ * @param {String} str column name
+ */
+function sortAndDownload(str) {
+    sortColumn = str; // update global variable
+    const order = document.getElementById("sortOrder"); // get content of sortOrder element
+
+    // decision to use the correct sort order
+    if (order.value == "asc") contentRow.sort(sortAsc);
     else contentRow.sort(sortDesc);
 
-    const csvString = objectToCsv(contentRow, headerRow, lineBreak).replaceAll(replaceString, splitter);
-    download(newFileName, "text/csv", csvString);
+    const csvString = objectToCsv(contentRow, headerRow, lineBreak).replaceAll(replaceString, splitter); // combine the arrays back to a string
+    download(newFileName, "text/csv", csvString); // create and download the file
 }
 
 //#region sort functions
+/**
+ * Compare 2 values for ascending order
+ * @param {String} a first value
+ * @param {String} b second value
+ * @returns {Number} Result for sort function -1 | 0 | 1
+ */
 function sortAsc(a, b) {
-    const fa = a[sortColumn].toLowerCase();
-    const fb = b[sortColumn].toLowerCase();
+    const fa = a[sortColumn].toLowerCase(); // lower case the property of a
+    const fb = b[sortColumn].toLowerCase(); // lower case the property of b
 
+    // compare the values
     if (fa < fb) return -1;
     if (fa > fb) return 1;
     return 0;
 };
 
+/**
+ * Compare 2 values for descending order
+ * @param {String} a first value
+ * @param {String} b second value
+ * @returns {Number} Result for sort function -1 | 0 | 1
+ */
 function sortDesc(a, b) {
-    const fa = a[sortColumn].toLowerCase();
-    const fb = b[sortColumn].toLowerCase();
+    const fa = a[sortColumn].toLowerCase(); // lower case the property of a
+    const fb = b[sortColumn].toLowerCase(); // lower case the property of b
 
+    // compare the values
     if (fa > fb) return -1;
     if (fa < fb) return 1;
     return 0;
 };
 //#endregion
 
+/**
+ * Create CSV-string from array
+ * @param {Array} data content of the file
+ * @param {Array} head header row
+ * @param {String} [lineBreak="\r\n"] lineBreak type of line break
+ * @returns {String} CSV file as string
+ */
 const objectToCsv = function (data, head = null, lineBreak = "\r\n") {
     const csvRows = [];
 
